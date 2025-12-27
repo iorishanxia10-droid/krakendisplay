@@ -2,55 +2,79 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>NZXT + YouTube Dashboard</title>
+  <title>NZXT Kraken Overlay</title>
   <style>
-    /* Krakenの画面は丸いので、全体を中央寄せにすると見やすくなります */
+    /* 全画面を黒、要素を中央に配置 */
     body { 
-      background:#000; color:#fff; font-family:sans-serif; 
-      margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 100vh; overflow: hidden;
+      margin: 0; background: #000; color: #fff; 
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden; display: flex; align-items: center; justify-content: center;
+      height: 100vh; width: 100vw;
     }
-    .box { background:rgba(34, 34, 34, 0.7); padding:10px; border-radius:10px; text-align: center; width: 80%; }
-    .temps { font-size:24px; font-weight: bold; margin-top: 10px; }
-    iframe { border-radius: 10px; }
+
+    /* 動画を背景として画面いっぱいに広げる */
+    .video-background {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;
+      pointer-events: none; /* 操作を無効化 */
+    }
+
+    /* 温度情報を動画の上に浮かせる */
+    .overlay {
+      position: relative; z-index: 2;
+      background: rgba(0, 0, 0, 0.4); /* 背景を少し暗くして文字を読みやすく */
+      padding: 10px 20px; border-radius: 15px;
+      text-align: center; border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .temp-item { font-size: 28px; font-weight: 800; line-height: 1.2; }
+    .label { font-size: 12px; text-transform: uppercase; opacity: 0.8; margin-right: 5px; }
+    
+    /* 色分け */
+    .cpu { color: #ff5e5e; }
+    .gpu { color: #5eff5e; }
+    .liq { color: #5e97ff; }
   </style>
 </head>
 <body>
 
-<div class="box">
-  <iframe
-    width="240" 
-    height="135"
-    src="https://www.youtube.com/embed/VIDEO_ID?autoplay=1&mute=1&loop=1&playlist=P7cnTQbztnk"
-    frameborder="0"
-  ></iframe>
-
-  <div class="temps" id="temps">
-    読み込み中…
+  <div class="video-background">
+    <iframe
+      width="100%" height="100%"
+      src="https://www.youtube.com/embed/fA_T7M-fG8w?autoplay=1&mute=1&loop=1&playlist=fA_T7M-fG8w&controls=0&showinfo=0"
+      frameborder="0" allow="autoplay"
+    ></iframe>
   </div>
-</div>
 
-<script>
-  // NZXT CAMからのデータを受け取る関数
-  window.nzxt = {
-    v1: {
-      onMonitoringDataUpdate: (data) => {
-        // CPU, GPU, 水温(liquid)を取得
-        const cpuTemp = data.cpus.length > 0 ? Math.round(data.cpus[0].temperature) : '--';
-        const gpuTemp = data.gpus.length > 0 ? Math.round(data.gpus[0].temperature) : '--';
-        // Krakenの種類によって data.liquid だったり data.krakens[0].liquidTemperature だったりします
-        const liquidTemp = data.liquid ? Math.round(data.liquid.temperature) : (data.krakens && data.krakens[0] ? Math.round(data.krakens[0].liquidTemperature) : '--');
+  <div class="overlay">
+    <div class="temp-item cpu"><span class="label">CPU</span><span id="cpu-temp">--</span>°C</div>
+    <div class="temp-item gpu"><span class="label">GPU</span><span id="gpu-temp">--</span>°C</div>
+    <div class="temp-item liq"><span class="label">LIQ</span><span id="liq-temp">--</span>°C</div>
+  </div>
 
-        document.getElementById("temps").innerHTML = `
-          <div style="color: #ff5e5e;">CPU: ${cpuTemp}°C</div>
-          <div style="color: #5eff5e;">GPU: ${gpuTemp}°C</div>
-          <div style="color: #5e97ff;">Liq: ${liquidTemp}°C</div>
-        `;
+  <script>
+    // NZXT CAMからデータを受け取るおまじない
+    window.nzxt = {
+      v1: {
+        onMonitoringDataUpdate: (data) => {
+          // CPU温度
+          if (data.cpus && data.cpus.length > 0) {
+            document.getElementById('cpu-temp').innerText = Math.round(data.cpus[0].temperature);
+          }
+          // GPU温度
+          if (data.gpus && data.gpus.length > 0) {
+            document.getElementById('gpu-temp').innerText = Math.round(data.gpus[0].temperature);
+          }
+          // 水温 (Kraken本体のデータ)
+          let lTemp = '--';
+          if (data.liquid) {
+            lTemp = Math.round(data.liquid.temperature);
+          } else if (data.krakens && data.krakens[0]) {
+            lTemp = Math.round(data.krakens[0].liquidTemperature);
+          }
+          document.getElementById('liq-temp').innerText = lTemp;
+        }
       }
-    }
-  };
-</script>
-
+    };
+  </script>
 </body>
 </html>
-
