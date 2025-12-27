@@ -1,2 +1,55 @@
-src="https://www.youtube.com/embed/3BpDOa0aaHc?autoplay=1&mute=1&loop=1&playlist=3BpDOa0aaHc&controls=0"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>NZXT Kraken Fix</title>
+  <style>
+    body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; }
+    .video-background { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+    .overlay { position: relative; z-index: 2; background: rgba(0, 0, 0, 0.6); padding: 15px; border-radius: 15px; text-align: center; min-width: 120px; }
+    .temp { font-size: 22px; font-weight: bold; margin: 5px 0; }
+    .cpu { color: #ff5e5e; } .gpu { color: #5eff5e; } .liq { color: #5e97ff; }
+  </style>
+</head>
+<body>
 
+  <div class="video-background">
+    <iframe width="100%" height="100%" 
+      src="https://www.youtube.com/embed/fA_T7M-fG8w?autoplay=1&mute=1&loop=1&playlist=fA_T7M-fG8w&controls=0&modestbranding=1" 
+      frameborder="0" allow="autoplay; encrypted-media"></iframe>
+  </div>
+
+  <div class="overlay">
+    <div class="temp cpu">CPU: <span id="cpu">--</span>°C</div>
+    <div class="temp gpu">GPU: <span id="gpu">--</span>°C</div>
+    <div class="temp liq">LIQ: <span id="liq">--</span>°C</div>
+  </div>
+
+  <script>
+    // NZXT CAM データの受け取り
+    window.nzxt = {
+      v1: {
+        onMonitoringDataUpdate: (data) => {
+          try {
+            // CPU
+            if (data.cpus && data.cpus[0]) document.getElementById('cpu').innerText = Math.round(data.cpus[0].temperature);
+            // GPU
+            if (data.gpus && data.gpus[0]) document.getElementById('gpu').innerText = Math.round(data.gpus[0].temperature);
+            
+            // 水温 (あらゆるパターンを網羅)
+            let liquid = "--";
+            if (data.liquid) {
+              liquid = Math.round(data.liquid.temperature);
+            } else if (data.krakens && data.krakens[0]) {
+              liquid = Math.round(data.krakens[0].liquidTemperature || data.krakens[0].status.liquidTemperature);
+            }
+            document.getElementById('liq').innerText = liquid;
+          } catch (e) {
+            console.error("Data error:", e);
+          }
+        }
+      }
+    };
+  </script>
+</body>
+</html>
