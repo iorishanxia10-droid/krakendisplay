@@ -4,49 +4,51 @@
   <meta charset="utf-8" />
   <title>NZXT + YouTube Dashboard</title>
   <style>
-    body { background:#111; color:#fff; font-family:sans-serif; }
-    .wrap { display:flex; gap:20px; }
-    .box { background:#222; padding:15px; border-radius:10px; }
-    .temps { font-size:20px; }
+    /* Krakenの画面は丸いので、全体を中央寄せにすると見やすくなります */
+    body { 
+      background:#000; color:#fff; font-family:sans-serif; 
+      margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 100vh; overflow: hidden;
+    }
+    .box { background:rgba(34, 34, 34, 0.7); padding:10px; border-radius:10px; text-align: center; width: 80%; }
+    .temps { font-size:24px; font-weight: bold; margin-top: 10px; }
+    iframe { border-radius: 10px; }
   </style>
 </head>
 <body>
 
-<h2>YouTube ＋ 温度ダッシュボード</h2>
+<div class="box">
+  <iframe
+    width="240" 
+    height="135"
+    src="https://www.youtube.com/embed/VIDEO_ID?autoplay=1&mute=1&loop=1&playlist=VIDEO_ID"
+    frameborder="0"
+  ></iframe>
 
-<div class="wrap">
-  <div class="box">
-    <iframe
-      width="560"
-      height="315"
-      src="https://www.youtube.com/embed/P7cnTQbztnk"
-      frameborder="0"
-      allowfullscreen
-    ></iframe>
-  </div>
-
-  <div class="box temps" id="temps">
+  <div class="temps" id="temps">
     読み込み中…
   </div>
 </div>
 
 <script>
-// ▼▼ ここをセンパイの CAM URL に書き換える ▼▼
-const CAM_URL = "http://ここにCAMのURLを貼る";
+  // NZXT CAMからのデータを受け取る関数
+  window.nzxt = {
+    v1: {
+      onMonitoringDataUpdate: (data) => {
+        // CPU, GPU, 水温(liquid)を取得
+        const cpuTemp = data.cpus.length > 0 ? Math.round(data.cpus[0].temperature) : '--';
+        const gpuTemp = data.gpus.length > 0 ? Math.round(data.gpus[0].temperature) : '--';
+        // Krakenの種類によって data.liquid だったり data.krakens[0].liquidTemperature だったりします
+        const liquidTemp = data.liquid ? Math.round(data.liquid.temperature) : (data.krakens && data.krakens[0] ? Math.round(data.krakens[0].liquidTemperature) : '--');
 
-async function load() {
-  const res = await fetch(CAM_URL);
-  const data = await res.json();
-
-  document.getElementById("temps").innerText =
-    `CPU: ${data.cpu.temp}°C
-GPU: ${data.gpu.temp}°C
-Liquid: ${data.liquid.temp}°C`;
-}
-
-// 2秒ごとに更新
-setInterval(load, 2000);
-load();
+        document.getElementById("temps").innerHTML = `
+          <div style="color: #ff5e5e;">CPU: ${cpuTemp}°C</div>
+          <div style="color: #5eff5e;">GPU: ${gpuTemp}°C</div>
+          <div style="color: #5e97ff;">Liq: ${liquidTemp}°C</div>
+        `;
+      }
+    }
+  };
 </script>
 
 </body>
