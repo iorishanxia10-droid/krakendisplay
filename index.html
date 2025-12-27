@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; overflow: hidden; background: black; font-family: sans-serif; }
+        #player { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .overlay {
+            position: absolute; z-index: 2; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-weight: bold; font-size: 24px; pointer-events: none; /* クリックを動画に通す */
+        }
+        .data-item { margin: 5px; }
+        .label { font-size: 14px; opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <div id="player"></div>
+
+    <div class="overlay">
+        <div class="data-item"><span class="label">CPU</span> <span id="cpu-temp">--</span>°C</div>
+        <div class="data-item"><span class="label">GPU</span> <span id="gpu-temp">--</span>°C</div>
+        <div class="data-item"><span class="label">Liquid</span> <span id="liquid-temp">--</span>°C</div>
+    </div>
+
+    <script>
+        // 1. YouTube API の読み込み
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        var player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                videoId: 'P7cnTQbztnk', // ここにYouTubeの動画IDを入れる
+                playerVars: { 
+                    'autoplay': 1, 'controls': 0, 'mute': 1, 'loop': 1, 'playlist': 'YOUR_VIDEO_ID' 
+                }
+            });
+        }
+
+        // 2. NZXT CAM データの監視
+        window.nzxt = {
+            v1: {
+                onMonitoringDataUpdate: (data) => {
+                    if (data.cpus.length > 0) {
+                        document.getElementById('cpu-temp').innerText = Math.round(data.cpus[0].temperature);
+                    }
+                    if (data.gpus.length > 0) {
+                        document.getElementById('gpu-temp').innerText = Math.round(data.gpus[0].temperature);
+                    }
+                    // 水温(liquid)の取得
+                    // ※Kraken本体のデータはdata.liquidにある場合が多いです
+                    if (data.liquid) {
+                        document.getElementById('liquid-temp').innerText = Math.round(data.liquid.temperature);
+                    }
+                }
+            }
+        };
+    </script>
+</body>
+</html>
