@@ -19,7 +19,7 @@
     <iframe
       width="560"
       height="315"
-      src="https://www.youtube.com/embed/VIDEO_ID"
+      src="https://www.youtube.com/embed/P7cnTQbztnk"
       frameborder="0"
       allowfullscreen
     ></iframe>
@@ -31,23 +31,30 @@
 </div>
 
 <script>
-// ▼▼ ここをセンパイの CAM URL に書き換える ▼▼
-const CAM_URL = "http://ここにCAMのURLを貼る";
-
-async function load() {
-  const res = await fetch(CAM_URL);
-  const data = await res.json();
-
-  document.getElementById("temps").innerText =
-    `CPU: ${data.cpu.temp}°C
-GPU: ${data.gpu.temp}°C
-Liquid: ${data.liquid.temp}°C`;
-}
-
-// 2秒ごとに更新
-setInterval(load, 2000);
-load();
-</script>
-
+    // NZXT CAM データの受け取り
+    window.nzxt = {
+      v1: {
+        onMonitoringDataUpdate: (data) => {
+          try {
+            // CPU
+            if (data.cpus && data.cpus[0]) document.getElementById('cpu').innerText = Math.round(data.cpus[0].temperature);
+            // GPU
+            if (data.gpus && data.gpus[0]) document.getElementById('gpu').innerText = Math.round(data.gpus[0].temperature);
+            
+            // 水温 (あらゆるパターンを網羅)
+            let liquid = "--";
+            if (data.liquid) {
+              liquid = Math.round(data.liquid.temperature);
+            } else if (data.krakens && data.krakens[0]) {
+              liquid = Math.round(data.krakens[0].liquidTemperature || data.krakens[0].status.liquidTemperature);
+            }
+            document.getElementById('liq').innerText = liquid;
+          } catch (e) {
+            console.error("Data error:", e);
+          }
+        }
+      }
+    };
+  </script>
 </body>
 </html>
